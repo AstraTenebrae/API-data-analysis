@@ -1,10 +1,11 @@
 {% extends "base.html" %}
+
 {% block title %} Upload files {% endblock %}
 
 {% block content %}
     <form action="/upload" method="post" enctype="multipart/form-data">
             <label for="file_label"> Выберите файлы для загрузки: </label>
-            <input type="file" id="file_label" name="file_name" accept=".csv,.xls,.xlsx" multiple>
+            <input type="file" id="file_label" name="file_name" accept={{allowed_extensions}}  multiple>
             <input type="submit" value="загрузить">
     </form>
 {% endblock %}

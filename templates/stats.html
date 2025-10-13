@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block title %} Statistics {% endblock %}
+
+{% block content %} 
+    <table>
+        <caption>Средние значения:</caption>
+        <thead>
+            {% for column in stats_means.index %}
+                <th> {{column}} </th>
+            {% endfor %}
+        </thead>
+        <tbody>
+            <tr>
+                {% for column in stats_means.values %}
+                    <td> {{column}} </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+
+
+<hr>
+
+
+    <table>
+        <caption>Медианы:</caption>
+        <thead>
+            {% for column in stats_medians.index %}
+                <th> {{column}} </th>
+            {% endfor %}
+        </thead>
+        <tbody>
+            <tr>
+                {% for column in stats_medians.values %}
+                    <td> {{column}} </td>
+                {% endfor %}
+            </tr>
+        </tbody>
+    </table>
+
+
+<hr>
+
+
+    <table>
+        <caption>Корреляция:</caption>
+        <thead>
+            <th> </th>
+            {% for column in stats_correlation.columns %}
+                <th> {{column}} </th>
+            {% endfor %}
+        </thead>
+        <tbody>
+            {% for index, row in stats_correlation.iterrows() %}
+                <tr>
+                    <td> {{index}} </td>
+                    {% for value in row.values %}
+                        <td> {{value}} </td>
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+
+
+
+
+
+
+
+{% endblock %}
