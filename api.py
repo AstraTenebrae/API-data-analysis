@@ -1,5 +1,4 @@
-import os, shutil
-import glob
+import os
 import pandas as pd
 
 from flask import Flask, render_template, request
@@ -58,8 +57,8 @@ def data_stats():
     return render_template("stats.html", stats_means=data_analysis_means(data), stats_medians=data_analysis_medians(data), stats_correlation=data_analysis_correlation(data))
 
 
-@app.route(DATA_ENDPOINT+'clean', methods=['GET'])
-def data_clean() -> tuple:
+@app.route(DATA_ENDPOINT+'delete', methods=['GET'])
+def data_delete() -> tuple:
     file_name = request.args.get(key='filename', default=None)
     folder = app.config['UPLOAD_FOLDER']
 
@@ -70,3 +69,4 @@ def data_clean() -> tuple:
         return delete_one_file(file_name=file_name, folder=folder)
 
     return delete_all(folder=folder)
+
