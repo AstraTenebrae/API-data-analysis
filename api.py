@@ -3,7 +3,8 @@ import os
 from sqlalchemy import create_engine
 from flask import Flask, render_template, request
 from logic import upload_to_directory, upload_to_db, delete_from_directory, delete_from_db, data_stats_directory, data_stats_db, clean_file_data, clean_db_data
-from settings import UPLOAD_FOLDER, DATA_ENDPOINT, DATABASE_URL, allowed_file_extensions
+
+from api_settings import DATA_ENDPOINT, DATABASE_URL, UPLOAD_FOLDER, allowed_file_extensions
 
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
