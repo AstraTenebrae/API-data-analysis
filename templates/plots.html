@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %} Plots {% endblock %}
+
+{% block content %}
+    <h2>Графики зависимости от столбца "{{ x_column }}":</h2>
+    {% if plots %}
+        {% for column_name, plot_data in plots.items() %}
+            <div>
+                <h3>{{ column_name }} / {{ x_column }}</h3>
+                <img src="data:image/png;base64,{{ plot_data }}" style="max-width: 100%; height: auto;">
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>Нет числовых столбцов для построения графиков</p>
+    {% endif %}
+{% endblock %}

@@ -2,7 +2,7 @@ import os
 
 from sqlalchemy import create_engine
 from flask import Flask, render_template, request
-from logic import upload_to_directory, upload_to_db, delete_from_directory, delete_from_db, data_stats_directory, data_stats_db, clean_file_data, clean_db_data
+from logic import upload_to_directory, upload_to_db, delete_from_directory, delete_from_db, data_stats_directory, data_stats_db, clean_file_data, clean_db_data, show_plots_file, show_plots_db
 
 from api_settings import DATA_ENDPOINT, DATABASE_URL, UPLOAD_FOLDER, allowed_file_extensions
 
@@ -53,3 +53,14 @@ def data_clean() -> tuple:
         return "Имя файла не указано", 400
 #    return clean_file_data(file_name=file_name, app=app)
     return clean_db_data(file_name=file_name, app=app, engine=engine)
+
+@app.route(DATA_ENDPOINT+'plots', methods=['GET'])
+def data_plots() -> tuple:
+    file_name = request.args.get(key='filename', default=None)
+    x_column = request.args.get(key='x', default=None)
+    if file_name is None:
+        return "Имя файла не указано", 400
+    if x_column is None:
+        return "Ось абсцисс не указана", 400
+#    return show_plots_file(file_name=file_name, x_column=x_column, app=app)
+    return show_plots_db(file_name=file_name, x_column=x_column, app=app, engine=engine)

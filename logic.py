@@ -4,6 +4,10 @@ from typing import Literal
 from flask import render_template
 from sqlalchemy import text, inspect
 
+import base64
+import matplotlib.pyplot
+from matplotlib.figure import Figure
+from io import BytesIO
 
 
 def data_analysis_means(data: pd.DataFrame, dec=3, num_only=True) -> pd.Series:
@@ -160,14 +164,14 @@ def data_stats_directory(file_name, app, *args, **kwargs):
             return "Обработка файлов с данным расширением ещё не реализована", 415
     except Exception as e:
         return f"Ошибка при чтении файла: {str(e)}", 400
-    return render_template("stats.html", stats_means=data_analysis_means(data), stats_medians=data_analysis_medians(data), stats_correlation=data_analysis_correlation(data))
+    return render_template("stats.html", stats_means=data_analysis_means(data), stats_medians=data_analysis_medians(data), stats_correlation=data_analysis_correlation(data)), 200
 
 def data_stats_db(file_name, app, engine, *args, **kwargs):
     table_name = file_name.rsplit('.', 1)[0]
     if not inspect(engine).has_table(table_name):
         return f"Таблица {table_name} не найдена в базе данных", 404
     data = pd.read_sql_table(table_name, engine)    
-    return render_template("stats.html", stats_means=data_analysis_means(data), stats_medians=data_analysis_medians(data), stats_correlation=data_analysis_correlation(data))
+    return render_template("stats.html", stats_means=data_analysis_means(data), stats_medians=data_analysis_medians(data), stats_correlation=data_analysis_correlation(data)), 200
 
 def clean_data(data: pd.DataFrame) -> pd.DataFrame:
     data_copy = data.copy()
@@ -226,3 +230,77 @@ def clean_db_data(file_name, app, engine, *args, **kwargs):
     except Exception as e:
         return f"Ошибка при очистке данных в базе данных: {str(e)}", 500
     
+
+def create_plots(data: pd.DataFrame, x_column: str, dec=3) -> tuple:
+    if x_column not in data.columns:
+        return f"Столбец {x_column} не был найден", 400
+    if not pd.api.types.is_numeric_dtype(data[x_column]):
+        return f"Столбец {x_column} не является числовым", 400
+    
+    plots = {}
+    numeric_columns = data.select_dtypes(include=['int64', 'float64']).columns
+
+    for y_column in numeric_columns:
+        if y_column == x_column:
+            continue
+        else:
+            fig = Figure(figsize=(12, 8))
+            ax = fig.add_subplot(111)
+            ax.scatter(data[x_column], data[y_column], color="red")
+            ax.set_xlabel(x_column, fontsize=12)
+            ax.set_ylabel(y_column, fontsize=12)
+            ax.set_title(f"{y_column} / {x_column}", fontsize=16)
+            ax.grid(visible=True)
+            
+            buf = BytesIO()
+            fig.savefig(buf, format="png", bbox_inches='tight')
+            buf.seek(0)
+
+            image_base64 = base64.b64encode(buf.getvalue()).decode('utf-8')
+            plots[y_column] = image_base64
+
+            matplotlib.pyplot.close(fig)
+
+    return plots, 200
+
+def show_plots_file(file_name, x_column, app, *args, **kwargs):
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], file_name)
+    if not os.path.exists(file_path):
+        return "Файл не был найден: возможно, было указано неверное расширение или в имени есть ошибка", 415
+    
+    file_extension = file_name.split('.')[-1].lower()
+    try:
+        if file_extension == 'csv':
+            data = pd.read_csv(file_path, encoding="utf-8")
+        elif file_extension in ['xls', 'xlsx']:
+            data = pd.read_excel(file_path)
+        else:
+            return "Обработка файлов с данным расширением ещё не реализована", 415
+
+        plots, code = create_plots(data, x_column)
+        if code == 200:
+            return render_template("plots.html", plots=plots, x_column=x_column), 200
+        else:
+            return plots, code        
+    except ValueError as e:
+        return f"Ошибка в данных: {str(e)}", 400
+    except Exception as e:
+        return f"Ошибка при построении графиков: {str(e)}", 500
+    
+def show_plots_db(file_name, x_column, app, engine, *args, **kwargs):
+    table_name = file_name.rsplit('.', 1)[0]
+    try:
+        if not inspect(engine).has_table(table_name):
+            return f"Таблица {table_name} не найдена в базе данных", 404
+        
+        data = pd.read_sql_table(table_name, engine)
+        plots, code = create_plots(data, x_column)
+        if code == 200:
+            return render_template("plots.html", plots=plots, x_column=x_column), 200
+        else:
+            return plots, code
+        
+    except ValueError as e:
+        return f"Ошибка в данных: {str(e)}", 400
+    except Exception as e:
+        return f"Ошибка при построении графиков: {str(e)}", 500
